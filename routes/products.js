@@ -1,20 +1,55 @@
-import express from "express";
-import { MongoClient, MongoServerError } from 'mongodb'
+import express from 'express';
+import { connectToDatabase } from '../db.js';
 
-const url = 'mongodb://localhost:27017';
-const client = new MongoClient(url);
-const dbName = 'ZOO';
-const db = client.db(dbName);
-const collection = db.collection('data');
+const collectionPromise = connectToDatabase('data');
 const router = express.Router();
 
 router.use(express.json());
 
 /**
  * @swagger
+ * definitions:
+ *   Data:
+ *     properties:
+ *       text:
+ *         type: string
+ */
+
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     description: Obtenir toutes les entrées de données.
+ *     responses:
+ *       200:
+ *         description: Renvoie un tableau des entrées de données.
+ *       400:
+ *         description: Requête invalide.
+ *       404:
+ *         description: Aucune entrée de données trouvée.
+ */
+router.get('/', async (req, res) => {
+  const collection = await collectionPromise;
+  try {
+    const datas = await collection.find().toArray();
+    if (datas.length > 0) {
+      res.json(datas);
+    } else {
+      res.status(404).json({ error: 'Aucune entrée de données trouvée' });
+    }
+  } catch (error) {
+    if (error instanceof MongoServerError) {
+      console.log(`Erreur : ${error}`);
+    }
+    res.status(400).json({ error: 'Requête invalide' });
+  }
+});
+
+/**
+ * @swagger
  * /create-data:
  *   post:
- *     description: Create a new data entry.
+ *     description: Créer une nouvelle entrée de données.
  *     requestBody:
  *       content:
  *         application/json:
@@ -22,50 +57,20 @@ router.use(express.json());
  *             $ref: '#/definitions/Data'
  *     responses:
  *       200:
- *         description: Returns the result of the data creation.
+ *         description: Renvoie le résultat de la création de données.
  *       400:
- *         description: Invalid request body.
+ *         description: Corps de la requête invalide.
  */
 router.post('/create-data', async (req, res) => {
+  const collection = await collectionPromise;
   try {
     const insertResult = await collection.insertOne({ text: req.body.text });
-    console.log(req.body.text, insertResult);
     res.json(insertResult);
   } catch (error) {
     if (error instanceof MongoServerError) {
       console.log(`Erreur : ${error}`);
     }
-    res.status(400).json({ error: 'Invalid request body' });
-  }
-});
-
-/**
- * @swagger
- * /:
- *   get:
- *     description: Get all data entries.
- *     responses:
- *       200:
- *         description: Returns an array of data entries.
- *       400:
- *         description: Invalid request.
- *       404:
- *         description: No data entries found.
- */
-router.get('/', async (req, res) => {
-  try {
-    const datas = await collection.find().toArray();
-    console.log(req.body.text, datas);
-    if (datas.length > 0) {
-      res.json(datas);
-    } else {
-      res.status(404).json({ error: 'No data entries found' });
-    }
-  } catch (error) {
-    if (error instanceof MongoServerError) {
-      console.log(`Erreur : ${error}`);
-    }
-    res.status(400).json({ error: 'Invalid request' });
+    res.status(400).json({ error: 'Corps de la requête invalide' });
   }
 });
 
@@ -73,7 +78,7 @@ router.get('/', async (req, res) => {
  * @swagger
  * /update-data:
  *   put:
- *     description: Update a data entry by ID.
+ *     description: Mettre à jour une entrée de données par ID.
  *     requestBody:
  *       content:
  *         application/json:
@@ -81,17 +86,18 @@ router.get('/', async (req, res) => {
  *             $ref: '#/definitions/Data'
  *     responses:
  *       200:
- *         description: Returns a success message.
+ *         description: Renvoie un message de réussite.
  *       400:
- *         description: Invalid request.
+ *         description: Requête invalide.
  *       404:
- *         description: Data entry not found.
+ *         description: Entrée de données introuvable.
  */
 router.put('/update-data', async (req, res) => {
+  const collection = await collectionPromise;
   const id = req.body.id;
   const text = req.body.text;
   if (!id || !text) {
-    res.status(400).json({ error: 'Invalid request body' });
+    res.status(400).json({ error: 'Corps de la requête invalide' });
   } else {
     try {
       const updateResult = await collection.findOneAndUpdate(
@@ -99,15 +105,15 @@ router.put('/update-data', async (req, res) => {
         { $set: { text } }
       );
       if (updateResult.value) {
-        res.send('Success updated!');
+        res.send('Mise à jour réussie !');
       } else {
-        res.status(404).json({ error: 'Data entry not found' });
+        res.status(404).json({ error: 'Entrée de données introuvable' });
       }
     } catch (error) {
       if (error instanceof MongoServerError) {
         console.log(`Erreur : ${error}`);
       }
-      res.status(400).json({ error: 'Invalid request' });
+      res.status(400).json({ error: 'Requête invalide' });
     }
   }
 });
@@ -116,7 +122,7 @@ router.put('/update-data', async (req, res) => {
  * @swagger
  * /delete-data:
  *   delete:
- *     description: Delete a data entry by ID.
+ *     description: Supprimer une entrée de données par ID.
  *     requestBody:
  *       content:
  *         application/json:
@@ -125,32 +131,33 @@ router.put('/update-data', async (req, res) => {
  *               id:
  *                 type: string
  *             example:
- *               id: "6065d5e5afafab0d1c86ec1a"
+ *               id: string
  *     responses:
  *       200:
- *         description: Returns a success or failure message.
+ *         description: Renvoie un message de réussite ou d'échec.
  *       400:
- *         description: Invalid request.
+ *         description: Requête invalide.
  *       404:
- *         description: Data entry not found.
+ *         description: Entrée de données introuvable.
  */
 router.delete('/delete-data', async (req, res) => {
+  const collection = await collectionPromise;
   const id = req.body.id;
   if (!id) {
-    res.status(400).json({ error: 'Invalid request body' });
+    res.status(400).json({ error: 'Corps de la requête invalide' });
   } else {
     try {
       const deleteResult = await collection.deleteOne({ _id: ObjectId(id) });
       if (deleteResult.deletedCount > 0) {
-        res.send('La donnée a bien été supprimée');
+        res.send('Les données ont été supprimées');
       } else {
-        res.status(404).json({ error: 'Data entry not found' });
+        res.status(404).json({ error: 'Entrée de données introuvable' });
       }
     } catch (error) {
       if (error instanceof MongoServerError) {
         console.log(`Erreur : ${error}`);
       }
-      res.status(400).json({ error: 'Invalid request' });
+      res.status(400).json({ error: 'Requête invalide' });
     }
   }
 });

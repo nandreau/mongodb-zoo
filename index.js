@@ -1,9 +1,9 @@
 import express from 'express'
 import bodyParser from 'body-parser'
 import productRouter from './routes/products.js'
+import authRoutes from './routes/auth.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerJsdoc from 'swagger-jsdoc'
-import { MongoClient } from 'mongodb'
 
 async function main() {
     const app = express()
@@ -35,30 +35,35 @@ async function main() {
     };
 
     const specs = swaggerJsdoc(options);
-    const url = 'mongodb://localhost:27017';
-    const client = new MongoClient(url);
-    app.use(
-        "/api-docs",
-        swaggerUi.serve,
-        swaggerUi.setup(specs)
-    );
-    app.use(bodyParser.urlencoded({ extended: false }))
-    app.use(bodyParser.json())
-    app.use('/api-doc', swaggerUi.serve, swaggerUi.setup(specs, { explorer: true }))
+    // Middleware to set up CORS headers
+    app.use((req, res, next) => {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader(
+        'Access-Control-Allow-Methods',
+        'OPTIONS, GET, POST, PUT, PATCH, DELETE'
+        );
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        next();
+    });
 
-    app.use('/products', productRouter)
-    // CRUD create read update (delete)
-
-    // on ne peut avoir qu'un seul couple methode/route par app
-    app.get('/', (req, res, next) => {
-        res.send('Hello ESGI')
-    })
-    await client.connect();
-    console.log('Connected successfully to server');
-
+    app.use(bodyParser.urlencoded({ extended: false }));
+    app.use(bodyParser.json());
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+    app.use('/products', productRouter);
+    app.use('/auth', authRoutes);
   
-    // the following code examples can be pasted here...
-    app.listen(3000)
+    // Error handling middleware
+    app.use((error, req, res, next) => {
+        console.log(error); // Log the error for debugging
+        const status = error.statusCode || 500;
+        const message = error.message;
+        const data = error.data;
+        res.status(status).json({ message: message, data: data }); // Respond with error message and status code
+    });
+  
+    app.listen(3000, () => {
+      console.log('Server listening on port 3000');
+    });
 }
 
 main() 

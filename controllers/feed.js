@@ -1,9 +1,7 @@
-const fs = require('fs');
-const path = require('path');
-
-const { validationResult } = require('express-validator/check');
-
-const Post = require('../models/post');
+import fs from 'fs';
+import path from 'path';
+import { validationResult } from 'express-validator/check';
+import Post from '../models/post';
 
 exports.getPosts = (req, res, next) => {
   const currentPage = req.query.page || 1;
