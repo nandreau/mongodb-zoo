@@ -5,6 +5,8 @@ import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
 
 export const signup = async (req, res, next) => {
+  console.log('sad')
+  res.status(201).json({ message: 'User created!', userId: 1 });
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed.');

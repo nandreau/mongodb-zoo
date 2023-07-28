@@ -1,6 +1,6 @@
 import express from 'express';
 import { connectToDatabase } from '../db.js';
-
+import { MongoServerError, ObjectId } from 'mongodb'
 const collectionPromise = connectToDatabase('data');
 const router = express.Router();
 
@@ -61,7 +61,7 @@ router.get('/', async (req, res) => {
  *       400:
  *         description: Corps de la requête invalide.
  */
-router.post('/create-data', async (req, res) => {
+router.post('/insert-data', async (req, res) => {
   const collection = await collectionPromise;
   try {
     const insertResult = await collection.insertOne({ text: req.body.text });
@@ -101,13 +101,13 @@ router.put('/update-data', async (req, res) => {
   } else {
     try {
       const updateResult = await collection.findOneAndUpdate(
-        { _id: ObjectId(id) },
+        { _id: new ObjectId(id) }, 
         { $set: { text } }
       );
       if (updateResult.value) {
         res.send('Mise à jour réussie !');
       } else {
-        res.status(404).json({ error: 'Entrée de données introuvable' });
+        res.status(404).json({ error: 'Id introuvable' });
       }
     } catch (error) {
       if (error instanceof MongoServerError) {
@@ -147,17 +147,17 @@ router.delete('/delete-data', async (req, res) => {
     res.status(400).json({ error: 'Corps de la requête invalide' });
   } else {
     try {
-      const deleteResult = await collection.deleteOne({ _id: ObjectId(id) });
+      const deleteResult = await collection.deleteOne({ _id: new ObjectId(id) });
       if (deleteResult.deletedCount > 0) {
         res.send('Les données ont été supprimées');
       } else {
-        res.status(404).json({ error: 'Entrée de données introuvable' });
+        res.status(404).json({ error: 'Id introuvable' });
       }
     } catch (error) {
       if (error instanceof MongoServerError) {
         console.log(`Erreur : ${error}`);
       }
-      res.status(400).json({ error: 'Requête invalide' });
+      res.status(400).json({ error: 'Requête invalide: ' + error });
     }
   }
 });
