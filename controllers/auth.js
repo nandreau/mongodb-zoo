@@ -4,70 +4,76 @@ import jwt from 'jsonwebtoken';
 
 import User from '../models/user.js';
 
-export const signup = async (req, res, next) => {
-  console.log('sad')
-  res.status(201).json({ message: 'User created!', userId: 1 });
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    const error = new Error('Validation failed.');
-    error.statusCode = 422;
-    error.data = errors.array();
-    return next(error);
-  }
+const AuthController = {
+  signup: async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = new Error('Inscription échouée');
+      error.statusCode = 422;
+      error.data = errors.array();
+      return next(error);
+    }
 
-  const email = req.body.email;
-  const name = req.body.name;
-  const password = req.body.password;
-  const hashedPw = await bcrypt.hash(password, 12);
+    const email = req.body.email;
+    const name = req.body.name;
+    const password = req.body.password;
+    const hashedPw = await bcrypt.hash(password, 12);
 
-  const db = req.app.locals.db;
-  try {
-    const result = await db.collection('users').insertOne({
-      email: email,
-      password: hashedPw,
-      name: name,
-    });
-    res.status(201).json({ message: 'User created!', userId: result.insertedId });
-  } catch (err) {
-    console.error('Error creating user:', err);
-    res.status(500).json({ message: 'An error occurred while creating the user.' });
-  }
+    try {
+      const utilisateur = new User(email, hashedPw, name);
+      await utilisateur.save();
+      res.status(201).json({ message: 'Utilisateur créé !', userId: utilisateur._id });
+    } catch (err) {
+      console.error('Erreur lors de la création de l\'utilisateur :', err);
+      res.status(500).json({ error: 'Une erreur est survenue lors de la création de l\'utilisateur.' });
+    }
+  },
+
+  login: (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = new Error('Connexion échouée');
+      error.statusCode = 422;
+      error.data = errors.array();
+      return next(error);
+    }
+
+    const email = req.body.email;
+    const password = req.body.password;
+    let utilisateurCharge;
+    User.findOne({ email: email })
+      .then(utilisateur => {
+        if (!utilisateur) {
+          const erreur = new Error('Un utilisateur avec cet e-mail est introuvable.');
+          erreur.statusCode = 401;
+          throw erreur;
+        }
+        utilisateurCharge = utilisateur;
+        return bcrypt.compare(password, utilisateur.password);
+      })
+      .then(estIdentique => {
+        if (!estIdentique) {
+          const erreur = new Error('Mauvais mot de passe !');
+          erreur.statusCode = 401;
+          throw erreur;
+        }
+        const token = jwt.sign(
+          {
+            email: utilisateurCharge.email,
+            userId: utilisateurCharge._id.toString()
+          },
+          'somesupersecretsecret',
+          { expiresIn: '1h' }
+        );
+        res.status(200).json({ token: token, userId: utilisateurCharge._id.toString() });
+      })
+      .catch(err => {
+        if (!err.statusCode) {
+          err.statusCode = 500;
+        }
+        next(err);
+      });
+  },
 };
 
-export const login = (req, res, next) => {
-  const email = req.body.email;
-  const password = req.body.password;
-  let loadedUser;
-  User.findOne({ email: email })
-    .then(user => {
-      if (!user) {
-        const error = new Error('Un utilisateur avec cet e-mail est introuvable.');
-        error.statusCode = 401;
-        throw error;
-      }
-      loadedUser = user;
-      return bcrypt.compare(password, user.password);
-    })
-    .then(isEqual => {
-      if (!isEqual) {
-        const error = new Error('Mauvais mot de passe!');
-        error.statusCode = 401;
-        throw error;
-      }
-      const token = jwt.sign(
-        {
-          email: loadedUser.email,
-          userId: loadedUser._id.toString()
-        },
-        'somesupersecretsecret',
-        { expiresIn: '1h' }
-      );
-      res.status(200).json({ token: token, userId: loadedUser._id.toString() });
-    })
-    .catch(err => {
-      if (!err.statusCode) {
-        err.statusCode = 500;
-      }
-      next(err);
-    });
-};
+export default AuthController;

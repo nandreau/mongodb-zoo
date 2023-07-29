@@ -1,7 +1,7 @@
 import express from 'express';
 import { body } from 'express-validator';
 
-import { signup, login } from '../controllers/auth.js';
+import AuthController from '../controllers/auth.js';
 import User from '../models/user.js';
 
 const router = express.Router();
@@ -28,9 +28,22 @@ router.put(
       .not()
       .isEmpty()
   ],
-  signup
+  AuthController.signup
 );
 
-router.post('/login', login);
+router.post(
+  '/login',
+  [
+    body('email')
+      .isEmail()
+      .withMessage('Veuillez entrer une adresse e-mail valide.')
+      .normalizeEmail(),
+    body('password')
+      .trim()
+      .isLength({ min: 5 })
+      .withMessage('Le mot de passe doit être présent et comporter au moins 5 caractères.')
+  ],
+  AuthController.login
+);
 
 export default router;

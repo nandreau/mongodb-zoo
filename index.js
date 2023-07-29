@@ -1,6 +1,6 @@
 import express from 'express'
 import bodyParser from 'body-parser'
-import productRouter from './routes/products.js'
+import productRouter from './routes/feed.js'
 import authRoutes from './routes/auth.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerJsdoc from 'swagger-jsdoc'
@@ -49,7 +49,7 @@ async function main() {
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use(bodyParser.json());
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
-    app.use('/products', productRouter);
+    app.use('/feed', productRouter);
     app.use('/auth', authRoutes);
   
     // Error handling middleware
