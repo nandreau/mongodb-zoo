@@ -6,7 +6,6 @@ import User from '../models/user.js';
 
 const router = express.Router();
 
-
 /**
  * @swagger
  * tags:
@@ -16,8 +15,9 @@ const router = express.Router();
 
 /**
  * @swagger
- * /signup:
+ * /auth/signup:
  *   put:
+ *     tags: [Authentication]
  *     summary: Inscription d'un nouvel utilisateur
  *     description: Endpoint pour inscrire un nouvel utilisateur en utilisant un email, un mot de passe et un nom.
  *     parameters:
@@ -69,8 +69,9 @@ router.put(
 
 /**
  * @swagger
- * /login:
+ * /auth/login:
  *   post:
+ *     tags: [Authentication]
  *     summary: Connexion d'un utilisateur existant
  *     description: Endpoint pour connecter un utilisateur existant en utilisant son email et son mot de passe.
  *     parameters:
