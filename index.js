@@ -4,6 +4,7 @@ import productRouter from './routes/feed.js'
 import authRoutes from './routes/auth.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerJsdoc from 'swagger-jsdoc'
+const errorHandler = require('./middleware/error-handler');
 
 async function main() {
     const app = express()
@@ -51,6 +52,7 @@ async function main() {
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
     app.use('/feed', productRouter);
     app.use('/auth', authRoutes);
+    app.use(errorHandler);
   
     // Error handling middleware
     app.use((error, req, res, next) => {
