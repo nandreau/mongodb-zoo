@@ -4,7 +4,7 @@ import productRouter from './routes/feed.js'
 import authRoutes from './routes/auth.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerJsdoc from 'swagger-jsdoc'
-const errorHandler = require('./middleware/error-handler');
+import errorHandler from './middleware/error-handler.js'
 
 async function main() {
     const app = express()
