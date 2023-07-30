@@ -1,5 +1,3 @@
-// middleware/error-handler.js
-
 function errorHandler(err, req, res, next) {
     console.error(err);
 
@@ -26,4 +24,4 @@ function errorHandler(err, req, res, next) {
     res.status(statusCode).json({ error: errorMessage });
 }
 
-module.exports = errorHandler;
+export default errorHandler;

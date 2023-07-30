@@ -6,6 +6,14 @@ import User from '../models/user.js';
 
 const router = express.Router();
 
+
+/**
+ * @swagger
+ * tags:
+ *   name: Authentication
+ *   description: Gestion des utilisateurs
+ */
+
 /**
  * @swagger
  * /signup:

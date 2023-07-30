@@ -27,6 +27,8 @@ router.use(express.json());
  *         description: Renvoie un tableau de produits.
  *       401:
  *         description: Non autorisé - Token manquant ou invalide.
+ *       500:
+ *         description: Erreur serveur - Une erreur est survenue lors de la récupération des produits.
  */
 
 router.get('/products', isAuth, feedController.getProducts);
@@ -63,6 +65,10 @@ router.get('/products', isAuth, feedController.getProducts);
  *         description: Corps de la requête invalide - Vérifiez les propriétés du produit.
  *       401:
  *         description: Non autorisé - Token manquant ou invalide.
+ *       422:
+ *         description: Échec de création du produit - Veuillez vérifier les erreurs de validation.
+ *       500:
+ *         description: Erreur serveur - Une erreur est survenue lors de la création du produit.
  */
 
 router.post(
@@ -103,6 +109,8 @@ router.post(
  *         description: Non autorisé - Token manquant ou invalide.
  *       404:
  *         description: Produit introuvable.
+ *       500:
+ *         description: Erreur serveur - Une erreur est survenue lors de la récupération du produit.
  */
 
 router.get('/product/:productId', isAuth, feedController.getProduct);
@@ -148,6 +156,10 @@ router.get('/product/:productId', isAuth, feedController.getProduct);
  *         description: Non autorisé - Token manquant ou invalide.
  *       404:
  *         description: Produit introuvable.
+ *       422:
+ *         description: Échec de la mise à jour du produit - Veuillez vérifier les erreurs de validation.
+ *       500:
+ *         description: Erreur serveur - Une erreur est survenue lors de la mise à jour du produit.
  */
 
 router.put(
@@ -188,6 +200,8 @@ router.put(
  *         description: Non autorisé - Token manquant ou invalide.
  *       404:
  *         description: Produit introuvable.
+ *       500:
+ *         description: Erreur serveur - Une erreur est survenue lors de la suppression du produit.
  */
 
 router.delete('/product/:productId', isAuth, feedController.deleteProduct);

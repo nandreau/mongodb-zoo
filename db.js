@@ -7,7 +7,6 @@ const dbName = 'ZOO';
 async function connectToDatabase(collectionName) {
   try {
     await client.connect();
-    console.log('Connected successfully to the database');
     const db = await client.db(dbName);
     return db.collection(collectionName);
   } catch (error) {
